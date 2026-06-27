@@ -4,3 +4,6 @@ target/
 *.iml
 .vscode/
 .env
+
+# Never commit secrets — use application-local.yml for local overrides
+src/main/resources/application.yml
