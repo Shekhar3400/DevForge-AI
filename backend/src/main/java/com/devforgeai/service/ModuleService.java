@@ -16,11 +16,11 @@ public class ModuleService {
 
     private final ModuleRepository moduleRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
 
     public Module createModule(CreateModuleRequest request) {
-
-        Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+        // Verify ownership before creating
+        Project project = projectService.findOwnedProject(request.getProjectId());
 
         Module module = Module.builder()
                 .name(request.getName())
@@ -31,6 +31,12 @@ public class ModuleService {
     }
 
     public List<Module> getModulesByProject(Long projectId) {
+        // Verify ownership before returning modules
+        projectService.findOwnedProject(projectId);
         return moduleRepository.findByProjectId(projectId);
+    }
+
+    public void deleteModule(Long id) {
+        moduleRepository.deleteById(id);
     }
 }

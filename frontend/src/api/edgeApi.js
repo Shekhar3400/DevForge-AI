@@ -1,22 +1,13 @@
 import axios from "./axios";
 
-export const getEdges = async (architectureId) => {
-  const response = await axios.get(
-    `/api/edges/architecture/${architectureId}`
-  );
+export const getEdges = (architectureId) =>
+  axios.get(`/edges/architecture/${architectureId}`).then(r => r.data);
 
-  return response.data;
-};
+export const createEdge = (edge) =>
+  axios.post("/edges", edge).then(r => r.data);
 
-export const createEdge = async (data) => {
-  const response = await axios.post(
-    "/api/edges",
-    data
-  );
+export const updateEdge = (id, updates) =>
+  axios.patch(`/edges/${id}`, updates).then(r => r.data);
 
-  return response.data;
-};
-
-export const deleteEdge = async (id) => {
-  await axios.delete(`/api/edges/${id}`);
-};
+export const deleteEdge = (id) =>
+  axios.delete(`/edges/${id}`);

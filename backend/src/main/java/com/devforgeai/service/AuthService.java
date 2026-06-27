@@ -3,11 +3,13 @@ package com.devforgeai.service;
 import com.devforgeai.dto.auth.AuthResponse;
 import com.devforgeai.dto.auth.LoginRequest;
 import com.devforgeai.dto.auth.RegisterRequest;
+import com.devforgeai.entity.AuthProvider;
 import com.devforgeai.entity.User;
 import com.devforgeai.repository.UserRepository;
 import com.devforgeai.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +18,9 @@ import java.util.Collections;
 @Service
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final UserRepository        userRepository;
+    private final PasswordEncoder       passwordEncoder;
+    private final JwtService            jwtService;
     private final AuthenticationManager authenticationManager;
 
     public AuthService(
@@ -27,11 +29,13 @@ public class AuthService {
             JwtService jwtService,
             AuthenticationManager authenticationManager
     ) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
+        this.userRepository      = userRepository;
+        this.passwordEncoder     = passwordEncoder;
+        this.jwtService          = jwtService;
         this.authenticationManager = authenticationManager;
     }
+
+    // ── Email + Password Register ────────────────────────────────────────────
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -39,32 +43,20 @@ public class AuthService {
             throw new RuntimeException("Email already exists");
         }
 
-        User user = new User();
-
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(
-                passwordEncoder.encode(
-                        request.getPassword()
-                )
-        );
+        User user = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .provider(AuthProvider.LOCAL)
+                .emailVerified(false)
+                .build();
 
         userRepository.save(user);
 
-        String token = jwtService.generateToken(
-                new org.springframework.security.core.userdetails.User(
-                        user.getEmail(),
-                        user.getPassword(),
-                        Collections.emptyList()
-                )
-        );
-
-        return new AuthResponse(
-                token,
-                user.getEmail(),
-                user.getName()
-        );
+        return buildResponse(user);
     }
+
+    // ── Email + Password Login ───────────────────────────────────────────────
 
     public AuthResponse login(LoginRequest request) {
 
@@ -75,23 +67,30 @@ public class AuthService {
                 )
         );
 
-        User user = userRepository
-                .findByEmail(request.getEmail())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String token = jwtService.generateToken(
-                new org.springframework.security.core.userdetails.User(
-                        user.getEmail(),
-                        user.getPassword(),
-                        Collections.emptyList()
-                )
-        );
+        return buildResponse(user);
+    }
 
-        return new AuthResponse(
-                token,
+    // ── Shared JWT builder (used by both LOCAL and OAuth handlers) ────────────
+
+    public AuthResponse buildResponse(User user) {
+
+        UserDetails ud = new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
-                user.getName()
+                user.getPassword() != null ? user.getPassword() : "",
+                Collections.emptyList()
         );
+
+        String token = jwtService.generateToken(ud);
+
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .name(user.getName())
+                .pictureUrl(user.getPictureUrl())
+                .provider(user.getProvider())
+                .build();
     }
 }

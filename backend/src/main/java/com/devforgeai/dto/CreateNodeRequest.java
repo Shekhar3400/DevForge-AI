@@ -11,6 +11,10 @@ public class CreateNodeRequest {
 
     private String type;
 
+    private String technology;
+
+    private String framework;
+
     private Double positionX;
 
     private Double positionY;

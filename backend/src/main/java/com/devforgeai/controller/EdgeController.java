@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/edges")
@@ -16,23 +17,22 @@ public class EdgeController {
     private final EdgeService edgeService;
 
     @PostMapping
-    public Edge createEdge(
-            @RequestBody CreateEdgeRequest request) {
-
+    public Edge createEdge(@RequestBody CreateEdgeRequest request) {
         return edgeService.createEdge(request);
     }
 
     @GetMapping("/architecture/{architectureId}")
-    public List<Edge> getEdgesByArchitecture(
-            @PathVariable Long architectureId) {
-
+    public List<Edge> getEdgesByArchitecture(@PathVariable Long architectureId) {
         return edgeService.getEdgesByArchitecture(architectureId);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteEdge(
-            @PathVariable Long id) {
+    @PatchMapping("/{id}")
+    public Edge updateEdge(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        return edgeService.updateEdge(id, updates);
+    }
 
+    @DeleteMapping("/{id}")
+    public void deleteEdge(@PathVariable Long id) {
         edgeService.deleteEdge(id);
     }
 }

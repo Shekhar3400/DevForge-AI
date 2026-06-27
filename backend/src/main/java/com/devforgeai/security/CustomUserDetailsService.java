@@ -27,7 +27,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
-                user.getPassword(),
+                // OAuth users have no password — use empty string so Spring doesn't throw
+                user.getPassword() != null ? user.getPassword() : "",
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
     }

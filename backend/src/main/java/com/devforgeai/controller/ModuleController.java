@@ -28,4 +28,11 @@ public class ModuleController {
 
         return moduleService.getModulesByProject(projectId);
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteModule(
+            @PathVariable Long id) {
+
+        moduleService.deleteModule(id);
+    }
 }
